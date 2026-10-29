@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="nl-BE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MRR Simulator</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/chart.umd.min.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1>MRR Simulator</h1>
+    <p class="sub">Simuleer je maandelijkse recurrente omzet (MRR) over de komende 24 maanden. Alle data is fictief en blijft lokaal in je browser.</p>
+  </header>
+
+  <main class="layout">
+    <section class="card inputs" aria-labelledby="inputs-title">
+      <h2 id="inputs-title">Invoer</h2>
+      <form id="form" novalidate>
+        <div class="field">
+          <label for="customers">Aantal bestaande klanten</label>
+          <input id="customers" name="customers" type="number" min="0" step="1" inputmode="numeric">
+          <small class="error" id="customers-error" role="alert"></small>
+        </div>
+        <div class="field">
+          <label for="arpu">Gemiddelde maandelijkse omzet per klant</label>
+          <div class="affix"><span>€</span><input id="arpu" name="arpu" type="number" min="0" step="any" inputmode="decimal"></div>
+          <small class="error" id="arpu-error" role="alert"></small>
+        </div>
+        <div class="field">
+          <label for="newPerMonth">Nieuwe klanten per maand</label>
+          <input id="newPerMonth" name="newPerMonth" type="number" min="0" step="any" inputmode="decimal">
+          <small class="error" id="newPerMonth-error" role="alert"></small>
+        </div>
+        <div class="field">
+          <label for="churnPct">Maandelijks churnpercentage</label>
+          <div class="affix right"><input id="churnPct" name="churnPct" type="number" min="0" max="100" step="any" inputmode="decimal"><span>%</span></div>
+          <small class="error" id="churnPct-error" role="alert"></small>
+        </div>
+        <div class="field">
+          <label for="indexPct">Jaarlijkse prijsindexatie</label>
+          <div class="affix right"><input id="indexPct" name="indexPct" type="number" min="0" max="100" step="any" inputmode="decimal"><span>%</span></div>
+          <small class="error" id="indexPct-error" role="alert"></small>
+        </div>
+        <div class="buttons">
+          <button type="button" id="reset" class="primary">Voorbeelddata herstellen</button>
+        </div>
+        <div class="presets">
+          <span>Snelle scenario's:</span>
+          <button type="button" data-preset="groei">Groeiend SaaS-bedrijf</button>
+          <button type="button" data-preset="krimp">Hoge churn</button>
+          <button type="button" data-preset="index">Geen nieuwe klanten</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="results">
+      <div class="kpis" id="kpis">
+        <div class="kpi"><span class="k-label">Start-MRR (maand 0)</span><span class="k-val" id="kpi-start">–</span></div>
+        <div class="kpi"><span class="k-label">MRR maand 12</span><span class="k-val" id="kpi-12">–</span></div>
+        <div class="kpi"><span class="k-label">MRR maand 24</span><span class="k-val" id="kpi-24">–</span></div>
+        <div class="kpi"><span class="k-label">Groei na 24 maanden</span><span class="k-val" id="kpi-growth">–</span></div>
+        <div class="kpi"><span class="k-label">Klanten maand 24</span><span class="k-val" id="kpi-cust">–</span></div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head">
+          <h2>Verwachte MRR over 24 maanden</h2>
+          <p id="status" class="status" aria-live="polite"></p>
+        </div>
+        <div class="chart-wrap"><canvas id="chart" aria-label="Grafiek van de MRR per maand" role="img"></canvas></div>
+      </div>
+
+      <details class="card how" open>
+        <summary><h2>Hoe wordt dit berekend?</h2></summary>
+        <ul>
+          <li><strong>Maand 0</strong> is de huidige situatie: MRR = bestaande klanten × omzet per klant.</li>
+          <li>Elke maand <em>m</em> = 1 … 24: <code>klanten<sub>m</sub> = klanten<sub>m−1</sub> × (1 − churn) + nieuwe klanten</code>. Churn wordt dus berekend op het klantenbestand van de vorige maand; nieuwe klanten churnen pas vanaf de maand erna.</li>
+          <li><strong>Prijsindexatie</strong> wordt één keer per jaar toegepast, aan het begin van jaar 2 (maand 13): <code>prijs = prijs × (1 + indexatie)</code>.</li>
+          <li><code>MRR<sub>m</sub> = klanten<sub>m</sub> × prijs<sub>m</sub></code>. Gedeeltelijke klanten (bv. 186,1) worden in de berekening behouden voor nauwkeurigheid en enkel bij weergave afgerond.</li>
+          <li>Groei % = (MRR maand 24 ÷ start-MRR − 1) × 100. Is de start-MRR € 0, dan is de groei “n.v.t.”.</li>
+        </ul>
+      </details>
+
+      <div class="card table-card">
+        <h2>Maand per maand</h2>
+        <div class="table-wrap">
+          <table id="table">
+            <thead><tr><th>Maand</th><th>Klanten</th><th>Verloren</th><th>Nieuw</th><th>Prijs/klant</th><th>MRR</th><th>Δ vs. vorige</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="foot">MRR Simulator · lokaal prototype · fictieve gegevens</footer>
+</body>
+</html>
