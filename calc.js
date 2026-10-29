@@ -88,6 +88,27 @@ export function summarize(rows) {
   };
 }
 
+/**
+ * Verschil other − base, en de procentuele verandering t.o.v. base.
+ * pct is null als base ≈ 0 (niet berekenbaar, ook als other eveneens 0 is).
+ */
+export function relativeDiff(base, other) {
+  const diff = other - base;
+  const pct = !Number.isFinite(base) || Math.abs(base) < 1e-9 ? null : (other / base - 1) * 100;
+  return { diff, pct };
+}
+
+/**
+ * Vergelijkt twee simulaties. Verschil en percentage zijn Scenario B t.o.v. Scenario A
+ * op maand 12 en op de eindmaand (maand 24 bij de standaardhorizon).
+ */
+export function compareScenarios(rowsA, rowsB) {
+  const a = summarize(rowsA);
+  const b = summarize(rowsB);
+  const at = (key) => ({ a: a[key], b: b[key], ...relativeDiff(a[key], b[key]) });
+  return { a, b, mrr12: at('mrr12'), mrr24: at('mrr24') };
+}
+
 // Formattering (nl-BE)
 const eur0 = new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0, minimumFractionDigits: 0 });
 const eur2 = new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -98,3 +119,8 @@ export const fmtEur = (v) => nbsp(eur0.format(v));
 export const fmtEur2 = (v) => nbsp(eur2.format(v));
 export const fmtInt = (v) => nbsp(int0.format(Math.round(v) + 0));
 export const fmtPct = (v) => (v === null ? 'n.v.t.' : nbsp(pct1.format(v)) + ' %');
+/** Eurobedrag met expliciet teken. Afronding op hele euro's; |v| < 0,5 wordt € 0. */
+export const fmtSignedEur = (v) => {
+  if (!Number.isFinite(v) || Math.abs(v) < 0.5) return fmtEur(0);
+  return (v > 0 ? '+' : '\u2212') + fmtEur(Math.abs(v));
+};
